@@ -39,9 +39,11 @@ class Game extends React.Component {
     this.state = {
       history: [{
         squares: Array(9).fill(null),
+        stepNumber: 0,
       }],
       stepNumber: 0,
       xIsNext: true,
+      ascHistory: true,
     };
   }
   
@@ -56,6 +58,7 @@ class Game extends React.Component {
     this.setState({
       history: history.concat([{
         squares: squares,
+        stepNumber: history.length,
         stepLocation: i,
       }]),
       stepNumber: history.length,
@@ -69,24 +72,34 @@ class Game extends React.Component {
       xIsNext: (step % 2) === 0,
     });
   }
+
+  toggleHistoryOrder() {
+    this.setState({
+      ascHistory: !this.state.ascHistory,
+    })
+  }
   
   render() {
-    const history = this.state.history;
+    const history = this.state.history.slice();
     const currentStepNumber = this.state.stepNumber
     const current = history[currentStepNumber];
     const winner = calculateWinner(current.squares);
     
-    const moves = history.map((step, move) => {
+    let displayHistory = history;
+    if (!this.state.ascHistory) {
+      displayHistory = history.reverse();
+    }
+    const moves = displayHistory.map((step, move) => {
       const stepLocation = step.stepLocation;
-      const desc = move ?
-        'Go to move #' + move + " : (" + (stepLocation % 3) + "," + Math.floor(stepLocation / 3) + ")" :
+      const desc = step.stepNumber ?
+        'Go to move #' + step.stepNumber + " : (" + (stepLocation % 3) + "," + Math.floor(stepLocation / 3) + ")" :
         'Go to game start';
       return (
-        <li key={move}>
-          {move === currentStepNumber ? (
-            <button onClick={() => this.jumpTo(move)}><b>{desc}</b></button>
+        <li key={step.stepNumber}>
+          {step.stepNumber === currentStepNumber ? (
+            <button onClick={() => this.jumpTo(step.stepNumber)}><b>{desc}</b></button>
           ) : (
-            <button onClick={() => this.jumpTo(move)}>{desc}</button>
+            <button onClick={() => this.jumpTo(step.stepNumber)}>{desc}</button>
           )}
         </li>
       );
@@ -109,6 +122,7 @@ class Game extends React.Component {
         </div>
         <div className="game-info">
           <div>{status}</div>
+          Switch history order to <button onClick={() => this.toggleHistoryOrder()}>{this.state.ascHistory? 'Descending' : 'Ascending'}</button>
           <ol>{moves}</ol>
         </div>
       </div>
