@@ -4,7 +4,7 @@ import './index.css'
 
 function Square(props) {
   return (
-    <button className="square" onClick={props.onClick}>
+    <button className={props.highlight? 'square-yellow': 'square'} onClick={props.onClick}>
       {props.value}
     </button>
   );
@@ -13,8 +13,9 @@ function Square(props) {
 class Board extends React.Component {   
   renderSquare(i) {
     return (
-      <Square 
+      <Square         
         value={this.props.squares[i]}
+        highlight={this.props.highlight[i]}
         onClick={() => this.props.onClick(i)}
       />
     );
@@ -39,6 +40,7 @@ class Game extends React.Component {
     this.state = {
       history: [{
         squares: Array(9).fill(null),
+        highlight: Array(9).fill(false),
         stepNumber: 0,
       }],
       stepNumber: 0,
@@ -58,6 +60,7 @@ class Game extends React.Component {
     this.setState({
       history: history.concat([{
         squares: squares,
+        highlight: Array(9).fill(false),
         stepNumber: history.length,
         stepLocation: i,
       }]),
@@ -89,7 +92,7 @@ class Game extends React.Component {
     if (!this.state.ascHistory) {
       displayHistory = history.reverse();
     }
-    const moves = displayHistory.map((step, move) => {
+    const moves = displayHistory.map((step) => {
       const stepLocation = step.stepLocation;
       const desc = step.stepNumber ?
         'Go to move #' + step.stepNumber + " : (" + (stepLocation % 3) + "," + Math.floor(stepLocation / 3) + ")" :
@@ -107,7 +110,9 @@ class Game extends React.Component {
     
     let status;
     if (winner) {
-      status = 'Winner: ' + winner;
+      status = 'Winner: ' + winner.winner;
+      winner.straight.forEach((index) => current.highlight[index] = true)
+      current.highlight[winner.straight] = true;
     } else {
       status = 'Next player: ' + (this.state.xIsNext? 'X' : 'O');
     }
@@ -117,6 +122,7 @@ class Game extends React.Component {
         <div className="game-board">
           <Board 
             squares={current.squares}
+            highlight={current.highlight}
             onClick={(i) => this.handleClick(i)}
           />
         </div>
@@ -151,7 +157,10 @@ function calculateWinner(squares) {
   for (let i = 0; i < lines.length; i++) {
     const [a, b, c] = lines[i];
     if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      return squares[a];
+      return {
+        winner: squares[a],
+        straight: lines[i],
+      };
     }
   }
   return null;
